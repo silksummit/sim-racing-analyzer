@@ -1,1 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sim Racing Performance Analyzer</title>
+<meta name="description" content="Analyze your laps, compare your performance, and find exactly where you're losing time.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EEF1F5; --ink:#101A2E; --muted:#56627A; --line:#CBD3DF;
+  --blue:#1B3FE0; --loss:#E0323C; --gain:#1E9A5B; --white:#fff;
+  --head:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 18px/1.55 var(--body)}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+header.top{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+.brand{font:700 22px/1 var(--head);letter-spacing:.02em;text-decoration:none}
+.brand b{color:var(--blue)}
+nav a{margin-left:22px;text-decoration:none;color:var(--muted);font-weight:500;font-size:16px}
+nav a:hover{color:var(--ink)}
 
+.hero{padding:40px 0 56px}
+h1{font:700 clamp(46px,9vw,104px)/.92 var(--head);margin:0 0 20px;letter-spacing:-.01em;max-width:11ch}
+.lede{max-width:52ch;color:var(--muted);font-size:20px;margin:0 0 28px}
+.btn{display:inline-block;background:var(--blue);color:var(--white);padding:14px 26px;border-radius:4px;font-weight:600;text-decoration:none;font-size:18px}
+.btn:hover{background:#142fb0}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--ink);margin-left:10px}
+.btn.ghost:hover{background:var(--ink);color:var(--white)}
+
+.trace{margin-top:48px;background:var(--white);border:1px solid var(--line);border-radius:6px;padding:18px 18px 10px}
+.trace svg{width:100%;height:auto;display:block}
+.trace figcaption{font-size:15px;color:var(--muted);padding:6px 4px 8px}
+.k{display:inline-block;width:22px;height:4px;vertical-align:middle;margin-right:6px}
+.axis{font:600 13px var(--body);fill:var(--muted)}
+.loss-t{font:700 20px var(--head);fill:var(--loss)}
+.draw{stroke-dasharray:1400;stroke-dashoffset:1400;animation:draw 2.4s ease-out .3s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.draw{animation:none;stroke-dashoffset:0}}
+
+section{padding:64px 0;border-top:1px solid var(--line)}
+h2{font:700 clamp(34px,5vw,52px)/1 var(--head);margin:0 0 12px}
+.sub{color:var(--muted);max-width:56ch;margin:0 0 36px}
+
+.rows{border-top:2px solid var(--ink)}
+.row{display:grid;grid-template-columns:minmax(180px,1fr) 2fr;gap:24px;padding:24px 0;border-bottom:1px solid var(--line)}
+.row h3{font:700 28px/1.1 var(--head);margin:0}
+.row p{margin:0;max-width:60ch}
+
+.laps{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 28px;padding:0;list-style:none}
+.laps li{background:var(--white);border:1px solid var(--line);border-left:5px solid var(--blue);padding:8px 14px;font-weight:600;border-radius:3px}
+
+ol.steps{list-style:none;margin:0;padding:0;counter-reset:s;display:grid;grid-template-columns:repeat(5,1fr);gap:0;border-top:2px solid var(--ink)}
+ol.steps li{counter-increment:s;padding:18px 16px 0 0;font:700 24px/1.1 var(--head)}
+ol.steps li::before{content:counter(s);display:block;color:var(--blue);font-size:44px;margin-bottom:6px}
+
+.final{background:var(--ink);color:var(--white);border-radius:8px;padding:48px 32px;text-align:left;margin:16px 0 64px}
+.final h2{color:var(--white)}
+.final p{color:#B9C3D6;margin:0 0 24px;max-width:50ch}
+.final .btn{background:var(--white);color:var(--ink)}
+.final .btn:hover{background:#DCE3F2}
+footer{padding:0 0 40px;color:var(--muted);font-size:15px}
+
+@media (max-width:760px){
+  .row{grid-template-columns:1fr;gap:8px}
+  ol.steps{grid-template-columns:1fr 1fr}
+  .btn.ghost{margin:12px 0 0}
+  nav a:not(:last-child){display:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#">SIM RACING <b>ANALYZER</b></a>
+    <nav><a href="#features">Features</a><a href="#how">How it works</a><a href="#open">Open the app</a></nav>
+  </header>
+
+  <main>
+    <div class="hero">
+      <h1>Find the missing time.</h1>
+      <p class="lede">Analyze your laps, compare your performance, and see exactly where you are losing time: braking, corner entry, apex, exit, acceleration and sectors.</p>
+      <a class="btn" href="#open">Open the app</a>
+      <a class="btn ghost" href="#features">See what it does</a>
+
+      <figure class="trace" aria-label="Example lap comparison chart: speed traces for a reference lap and your lap, with time lost in the first corner">
+        <svg viewBox="0 0 800 300" role="img">
+          <title>Speed trace comparison</title>
+          <!-- zone bands -->
+          <rect x="105" y="10" width="95" height="200" fill="#E0323C" opacity=".08"/>
+          <rect x="285" y="10" width="95" height="200" fill="#E0323C" opacity=".08"/>
+          <g class="axis">
+            <text x="108" y="26">Braking</text>
+            <text x="212" y="212">Apex</text>
+            <text x="292" y="26">Exit</text>
+            <text x="430" y="26">Corner 2</text>
+          </g>
+          <line x1="0" y1="212" x2="800" y2="212" stroke="#CBD3DF"/>
+          <!-- reference lap -->
+          <path d="M0,60 L120,60 C150,60 165,150 200,170 C230,185 250,180 270,150 C300,100 320,70 360,60 L440,60 C470,60 485,120 520,140 C550,155 575,150 595,120 C620,80 650,62 690,60 L800,60" fill="none" stroke="#1B3FE0" stroke-width="4" stroke-linejoin="round"/>
+          <!-- your lap -->
+          <path class="draw" d="M0,60 L105,60 C140,62 160,160 200,185 C235,200 260,198 285,172 C315,128 340,88 380,68 L430,62 C462,62 482,130 520,152 C552,166 580,164 605,136 C632,100 660,68 700,62 L800,62" fill="none" stroke="#E0323C" stroke-width="4" stroke-linejoin="round"/>
+          <!-- delta -->
+          <text class="axis" x="0" y="238">Time delta</text>
+          <line x1="0" y1="285" x2="800" y2="285" stroke="#CBD3DF"/>
+          <path d="M0,285 L105,285 L200,272 L285,262 L380,256 L440,256 L520,248 L605,242 L700,240 L800,240 L800,285 Z" fill="#E0323C" opacity=".18"/>
+          <path d="M0,285 L105,285 L200,272 L285,262 L380,256 L440,256 L520,248 L605,242 L700,240 L800,240" fill="none" stroke="#E0323C" stroke-width="3"/>
+          <text class="loss-t" x="712" y="232">+0.41 s</text>
+        </svg>
+        <figcaption><span class="k" style="background:#1B3FE0"></span>Reference lap &nbsp; <span class="k" style="background:#E0323C"></span>Your lap &nbsp; Example data. Most of the time is lost by braking early and exiting late in the first corner.</figcaption>
+      </figure>
+    </div>
+
+    <section id="features">
+      <h2>Everything you need to get faster</h2>
+      <p class="sub">Look at the parts of the lap that cost you time, not only the final lap time.</p>
+      <div class="rows">
+        <div class="row"><h3>Cars &amp; Tracks</h3><p>Browse a large database of sim racing cars and tracks across different racing categories.</p></div>
+        <div class="row"><h3>Lap Analysis</h3><p>Compare laps and see where you gain or lose time, from braking to corner exit and every sector.</p></div>
+        <div class="row"><h3>Setup Center</h3><p>Explore and manage setups for different cars and circuits.</p></div>
+        <div class="row"><h3>Improve Your Driving</h3><p>Get clear information about which parts of the lap to focus on next.</p></div>
+        <div class="row"><h3>Track Your Progress</h3><p>Save your sessions and compare your performance over time.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Where the time goes</h2>
+      <p class="sub">Each lap is broken down into the phases that decide your lap time.</p>
+      <ul class="laps">
+        <li>Braking</li><li>Corner entry</li><li>Apex</li><li>Corner exit</li><li>Acceleration</li><li>Sectors</li>
+      </ul>
+    </section>
+
+    <section id="how">
+      <h2>How it works</h2>
+      <p class="sub">Five steps from your session to a faster lap.</p>
+      <ol class="steps">
+        <li>Open the app</li>
+        <li>Choose your sim</li>
+        <li>Select your car and track</li>
+        <li>Analyze your laps</li>
+        <li>Find the missing time</li>
+      </ol>
+    </section>
+
+    <section id="open" style="border-top:0;padding-top:0">
+      <div class="final">
+        <h2>Ready for your next lap?</h2>
+        <p>Open the app, load your session and see exactly where the time is hiding.</p>
+        <!-- Replace # with the link to your app -->
+        <a class="btn" href="#">Open the app</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>&copy; 2026 Sim Racing Performance Analyzer</footer>
+</div>
+</body>
+</html>
